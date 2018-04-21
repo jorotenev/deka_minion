@@ -3,3 +3,4 @@ secrets.json
 coords.json
 log/*.log
 output/
+*.pyc
