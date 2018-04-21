@@ -1,5 +1,5 @@
 .idea
 secrets.json
 coords.json
-*.log
+log/*.log
 output/
