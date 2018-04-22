@@ -3,12 +3,6 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from google_places_wrapper.wrapper import query_google_places
-from vroom import log
-
-# the logger we use in the actual code outputs to a file too, apart from to the console. leave only the
-# console when testing
-logger = log.getLogger()
-logger.handlers = []
 
 
 def do_nothing(*args, **kwargs): pass
@@ -44,7 +38,7 @@ class TestParallelise(TestCase):
         def fake_single_request(circle):
             with lock:
                 counter.value += 1
-                return {}
+                return {}  # follow the contract of the original function - it should return a dict
 
         patched_single_query.side_effect = fake_single_request
 
@@ -58,7 +52,6 @@ class TestParallelise(TestCase):
         """"""
         # store all of the tasks (circles) with which the query method was called
         dict = Manager().dict()
-        m = Manager()
 
         def fake_single_request(circle):
             # use the dict as a set - no dupes allowed
