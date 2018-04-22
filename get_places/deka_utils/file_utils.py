@@ -1,27 +1,18 @@
 import json
 from os import path, makedirs
-import logging as log
-from datetime import datetime as dt
-
-from deka_config import Config
 
 
 def readJSONFileAndConvertToDict(filepath):
     return json.load(open(filepath))
 
 
-def save_places_to_file(places):
-    file_path = "{folder}/{num_places}_{date}.json".format(
-        folder=Config.output_folder,
-        num_places=len(places),
-        date=dt.now().isoformat()
-    )
+def save_dict_to_file(data, file_path):
+
     abs_file_path = path.abspath(file_path)
     touch_directory(path.dirname(abs_file_path))
 
-    log.info("Saving %i places to %s" % (len(places), file_path))
     with(open(abs_file_path, 'w')) as file:
-        file.write(json.dumps(places))
+        file.write(json.dumps(data))
 
 
 def touch_directory(dir_path):

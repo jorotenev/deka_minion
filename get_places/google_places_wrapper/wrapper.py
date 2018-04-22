@@ -6,8 +6,8 @@ from typing import Dict
 
 import requests
 
-from deka_config import Config
-from deka_utils.misc import split_to_batches
+from get_places.deka_config import Config
+from get_places.deka_utils.misc import split_to_batches
 
 Circle = namedtuple('Circle', ['lat', 'lng', 'radius'])
 

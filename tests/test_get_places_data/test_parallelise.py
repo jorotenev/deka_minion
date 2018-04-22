@@ -2,13 +2,13 @@ from multiprocessing import Value, Lock, Manager
 from unittest import TestCase
 from unittest.mock import patch
 
-from google_places_wrapper.wrapper import query_google_places
+from get_places.google_places_wrapper.wrapper import query_google_places
 
 
 def do_nothing(*args, **kwargs): pass
 
 
-@patch('google_places_wrapper.wrapper._query_single_circle')
+@patch('get_places.google_places_wrapper.wrapper._query_single_circle')
 class TestParallelise(TestCase):
     """
         The google_places_wrapper is given a list of tasks (geographical circles, used to query an API).
@@ -23,7 +23,7 @@ class TestParallelise(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.patched_save = patch('deka_utils.file_utils.save_places_to_file')
+        cls.patched_save = patch('get_places.deka_utils.file_utils.save_dict_to_file')
         cls.patched_save.side_effect = do_nothing
         cls.patched_save.start()
 

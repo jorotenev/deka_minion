@@ -19,13 +19,13 @@ the larger the gap between when they finish. This is good because threads wouldn
 when they want to publish their results to the global results dictionary.
 """
 
+import logging as log
+from multiprocessing import Manager, Process, current_process
 from threading import Thread
 from typing import List, Callable
-from multiprocessing import Manager, Process, current_process
 
-from deka_utils.misc import split_to_batches
-from google_places_wrapper import Circle, Place
-import logging as log
+from get_places.deka_utils.misc import split_to_batches
+from get_places.google_places_wrapper import Circle, Place
 
 
 def parallelise(batches: List[List[Circle]], single_query_function: Callable[[Circle], Place]):
