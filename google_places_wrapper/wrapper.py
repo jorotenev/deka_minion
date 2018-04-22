@@ -1,13 +1,13 @@
+import logging as log
+from collections import namedtuple
+from datetime import datetime as dt
+from multiprocessing import cpu_count
 from typing import Dict
 
 import requests
 
 from deka_config import Config
-from multiprocessing import cpu_count
 from deka_utils.misc import split_to_batches
-import logging as log
-from collections import namedtuple
-from datetime import datetime as dt, timedelta
 
 Circle = namedtuple('Circle', ['lat', 'lng', 'radius'])
 
@@ -30,7 +30,7 @@ def query_google_places(circles_coords):
     # split to batches to parallelise querying
     items_per_batch = len(circles_coords) // cpu_count()
     batches = list(split_to_batches(circles_coords, items_per_batch=items_per_batch))
-    log.info("%i batches of circles will be processed now")
+    log.info("%i batches of circles will be processed now" % len(batches))
 
     result = parallelise(batches, single_query_function=_query_single_circle)
 
@@ -67,13 +67,13 @@ def _query_single_circle(circle: Circle) -> Dict:
         url = _build_api_url(params)
 
         try:
-            page_result = make_request(url)
+            page_result = _make_http_request(url)
             list_of_places = page_result['results']
             places_dict = {place['id']: place for place in list_of_places}  # dict comprehension
 
             all_pages_result.update(places_dict)
 
-            has_next_page = api_response_has_more_pages(page_result)
+            has_next_page = _api_response_has_more_pages(page_result)
             next_page_token = page_result[NEXT_PAGE_TOKEN_RESPONSE_KEY] if has_next_page else None
         except Exception as ex:
             log.critical('Failed API request. Exception: %s' % str(ex))
@@ -81,11 +81,11 @@ def _query_single_circle(circle: Circle) -> Dict:
     return all_pages_result
 
 
-def api_response_has_more_pages(query_result):
+def _api_response_has_more_pages(query_result):
     return NEXT_PAGE_TOKEN_RESPONSE_KEY in query_result
 
 
-def make_request(url):
+def _make_http_request(url):
     result = requests.get(url, timeout=4)
     if result.status_code != 200:
         raise Exception("Google API returned non-200 code for query %s" % url)

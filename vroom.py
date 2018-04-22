@@ -1,8 +1,12 @@
+"""
+Vroom-vroom - the minion engine has started.
+"""
+import logging as log
+from datetime import datetime as dt
+
 from deka_config import Config
 from deka_utils.file_utils import readJSONFileAndConvertToDict, save_places_to_file, touch_directory
-from google_places_wrapper.google_places_wrapper import Circle, query_google_places
-from datetime import datetime as dt
-import logging as log
+from google_places_wrapper.wrapper import Circle, query_google_places
 
 log_dir = 'log'
 touch_directory(log_dir)
