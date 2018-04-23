@@ -4,8 +4,9 @@ def split_to_batches(big_list, items_per_batch):
 
     Yield successive items_per_batch-sized chunks from big_list.
     """
+    if items_per_batch == 0:
+        return [big_list]
+
     batches = [big_list[x:x + items_per_batch] for x in range(0, len(big_list), items_per_batch)]
     assert (sum([len(batch) for batch in batches])) == len(big_list)
     return batches
-
-

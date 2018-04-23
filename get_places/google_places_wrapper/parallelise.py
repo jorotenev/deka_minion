@@ -91,7 +91,7 @@ def _query_batch(batch: List[Circle], result_store: dict, query_function) -> Non
         result_store.update(thread_result)
 
     threads = []
-    sub_batches = split_to_batches(batch, items_per_batch=len(batch) // 20)  # ~ 20 threads/process
+    sub_batches = split_to_batches(batch, items_per_batch=len(batch) // 30)  # ~ 20 threads/process
     for sub in sub_batches:
         t = Thread(target=sub_batch, kwargs={'mini_batch': sub})
         threads.append(t)

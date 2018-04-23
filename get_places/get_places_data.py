@@ -9,7 +9,7 @@ log_dir = 'log'
 touch_directory(log_dir)
 
 log.basicConfig(
-    level=log.DEBUG,
+    level=log.INFO,
     format='[%(levelname)s::%(asctime)s] %(message)s',
     handlers=[
         log.FileHandler("{0}/{1}.log".format(log_dir, 'deka_minion_%s' % dt.now().isoformat())),
