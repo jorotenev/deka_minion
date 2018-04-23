@@ -24,8 +24,8 @@ from multiprocessing import Manager, Process, current_process
 from threading import Thread
 from typing import List, Callable
 
+from deka_types import Circle, Place
 from get_places.deka_utils.misc import split_to_batches
-from get_places.google_places_wrapper import Circle, Place
 
 
 def parallelise(batches: List[List[Circle]], single_query_function: Callable[[Circle], Place]):

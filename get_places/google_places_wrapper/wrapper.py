@@ -1,5 +1,4 @@
 import logging as log
-from collections import namedtuple
 from datetime import datetime as dt
 from multiprocessing import cpu_count
 from time import sleep
@@ -7,13 +6,12 @@ from typing import Dict
 
 import requests
 
-from get_places.deka_config import Config
+from deka_types import Circle
+from get_places.config import Config
 from get_places.deka_utils.misc import split_to_batches
 
 # hide INFO logs from urllib3, used by requests
 log.getLogger("urllib3").setLevel(log.WARNING)
-
-Circle = namedtuple('Circle', ['lat', 'lng', 'radius'])
 
 _GOOGLE_API_ACCESS_CODE = Config.google_access_key.strip()
 

@@ -1,21 +1,10 @@
 import logging as log
 from datetime import datetime as dt
 
-from get_places.deka_config import Config
-from get_places.deka_utils.file_utils import readJSONFileAndConvertToDict, touch_directory, save_dict_to_file
-from get_places.google_places_wrapper.wrapper import Circle, query_google_places
-
-log_dir = 'log'
-touch_directory(log_dir)
-
-log.basicConfig(
-    level=log.INFO,
-    format='[%(levelname)s::%(asctime)s] %(message)s',
-    handlers=[
-        log.FileHandler("{0}/{1}.log".format(log_dir, 'deka_minion_%s' % dt.now().isoformat())),
-        log.StreamHandler()
-    ]
-)
+from deka_types import Circle
+from get_places.config import Config
+from get_places.google_places_wrapper.wrapper import query_google_places
+from shared_utils.file_utils import readJSONFileAndConvertToDict, save_dict_to_file
 
 
 def main():

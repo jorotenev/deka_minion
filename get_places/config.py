@@ -1,10 +1,10 @@
 import os
 
-_current_dir = os.path.dirname(os.path.realpath(__file__))
+from shared_utils.file_utils import get_durectiry_of_file
 
 
 class Config:
-    raw_input_file = "%s/input/coords.json" % _current_dir
+    raw_input_file = "%s/input/coords.json" % get_durectiry_of_file(__file__)
     google_access_key = os.environ['GOOGLE_ACCESS_KEY']
     google_places_api_url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
     output_folder = "output"
