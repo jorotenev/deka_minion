@@ -1,8 +1,8 @@
 import logging as log
-from typing import Tuple, List
+from typing import Tuple, Dict
 
 from load_data.datastore_adapter import load_to_datastore
-from load_data.deka_types import LatLng, Metadata, GeoRectangle
+from load_data.deka_types import Metadata
 from shared_utils.file_utils import readJSONFileAndConvertToDict
 
 
@@ -20,16 +20,12 @@ def read_input(file_path):
     return parse_raw_input(raw_input)
 
 
-def parse_raw_input(raw_input) -> Tuple[List, Metadata]:
+def parse_raw_input(raw_input) -> Tuple[Dict, Metadata]:
     input_meta = raw_input['metadata']
     bounding_rect = input_meta['bounding_rectangle']
-    northwest = bounding_rect['northwest']
-    southeast = bounding_rect['southeast']
-    nw_latlng = LatLng(lat=northwest['lat'], lng=northwest['lng'])
-    se_latlng = LatLng(lat=southeast['lat'], lng=southeast['lng'])
 
     metadata = Metadata(
-        bounding_rectangle=GeoRectangle(southeast=se_latlng, northwest=nw_latlng),
+        bounding_rectangle=bounding_rect,
         area_name=input_meta['area_name'])
     return raw_input['places'], metadata
 

@@ -2,9 +2,9 @@ import json
 from unittest import TestCase
 from uuid import uuid4
 
-from load_data.datastore_adapter import load_to_datastore, QueryFacade
-from load_data.datastore_adapter.redis import r, cities_boundaries_key, cities_places_template_key, \
-    cities_coordinates_template_key
+from load_data.datastore_adapter import load_to_datastore, Facade
+from load_data.datastore_adapter.redis import r, cities_boundaries_template_key, cities_places_template_key, \
+    cities_coordinates_template_key, KeyConverter
 from load_data.main import parse_raw_input
 from tests.test_load_data.test_data import dummy_data
 from . import test_redis_db
@@ -46,7 +46,7 @@ class TestRedisAdapter(TestCase):
 
         area_name = self.metadata.area_name
         expected_keys = [
-            cities_boundaries_key,
+            "%s%s" % (cities_boundaries_template_key, area_name),
             "%s%s" % (cities_places_template_key, area_name),
             "%s%s" % (cities_coordinates_template_key, area_name)
         ]
@@ -66,17 +66,19 @@ class TestRedisAdapter(TestCase):
         area_name = metadata.area_name
 
         expected_cities_boundaries_keys = [area_name]
-        self.assertEqual(set(r.hkeys(cities_boundaries_key)), set(expected_cities_boundaries_keys))
+        raw_keys = r.keys("*%s*" % cities_boundaries_template_key)
+        # keys == ["cities:boundaries:london"]
+        keys = [KeyConverter.get_area_name(k) for k in raw_keys]
+        self.assertEqual(set(keys), set(expected_cities_boundaries_keys))
 
         expected_cities_boundaries_value = json.dumps({
-            area_name: {
-                "northwest": {"lat": metadata.bounding_rectangle.nortwest.lat,
-                              "lng": metadata.bounding_rectangle.nortwest.lng},
-                "southeast": {"lat": metadata.bounding_rectangle.southeast.lat,
-                              "lng": metadata.bounding_rectangle.southeast.lng},
-            }
-        })
-        self.assertEqual(r.hget(cities_boundaries_key, area_name), expected_cities_boundaries_value)
+            "northwest": {"lat": metadata.bounding_rectangle["northwest"]["lat"],
+                          "lng": metadata.bounding_rectangle["northwest"]["lng"]},
+            "southeast": {"lat": metadata.bounding_rectangle["southeast"]["lat"],
+                          "lng": metadata.bounding_rectangle["southeast"]["lng"]},
+        }
+        )
+        self.assertEqual(expected_cities_boundaries_value, r.get(cities_boundaries_template_key + area_name))
 
     def test_correct_data_under_places(self):
         """
@@ -89,15 +91,15 @@ class TestRedisAdapter(TestCase):
         area_name = self.metadata.area_name
         places_key_for_area = cities_places_template_key + area_name
 
-        all_stored_places_keys = r.hgetall(places_key_for_area)
+        all_stored_places_dict = r.hgetall(places_key_for_area)
 
         expected_keys = set(dummy_data['places'].keys())
 
-        self.assertEqual(expected_keys, all_stored_places_keys)
+        self.assertEqual(expected_keys, set(all_stored_places_dict.keys()))
 
         # ensure the objects under the keys are correct
-        for place_key in all_stored_places_keys:
-            stored_place = QueryFacade.get_place_data(area_name=area_name, place_key=place_key)
+        for place_key, stored_place in all_stored_places_dict.items():
+            stored_place = Facade.get_place_data(area_name=area_name, place_key=place_key)
             self.assertEqual(self.places[place_key], stored_place)
 
     def test_correct_data_under_coordinates(self):
@@ -114,12 +116,12 @@ class TestRedisAdapter(TestCase):
         # for each place we've loaded query the datastore using the lat+lng of the given place.
         # the query is within a given small radius (for a lack of a better way to search)
         # we expected that the result will be a single item, representing the given place
-        for place in self.places:
+        for place_id, place in self.places.items():
             # use the coordinates of a place to query the datastore within a radius
             items = r.georadius(cities_coordinates_template_key + area_name,
-                                latitude=place['geometry']['lat'],
-                                longitude=place['geometry']['lng'],
-                                radius=10,
+                                latitude=place['geometry']['location']['lat'],
+                                longitude=place['geometry']['location']['lng'],
+                                radius=1,
                                 unit='m')
             self.assertEqual(1, len(items), "Expect that the datastore returned a single"
                                             "items when querying for a location")
