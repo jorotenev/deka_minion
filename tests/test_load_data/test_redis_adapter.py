@@ -1,19 +1,12 @@
 from unittest import TestCase
 from uuid import uuid4
 
-from load_data.config import Config
-
-test_redis_db = 9
-Config.REDIS_DB = test_redis_db
-
-dummy_places = {}
-for i in range(10):
-    dummy_places[uuid4()] = {
-        "geometry": {
-            "lat": i + 1,
-            "lng": i + 2
-        }
-    }
+from load_data.datastore_adapter import load_to_datastore
+# import only after the config was changed
+from load_data.datastore_adapter.redis import r
+from load_data.main import parse_raw_input
+from tests.test_load_data.test_data import dummy_data
+from . import test_redis_db
 
 
 def drop_db(redis_client):
@@ -23,14 +16,13 @@ def drop_db(redis_client):
 class TestRedisAdapter(TestCase):
     @classmethod
     def setUpClass(cls):
-        from load_data.redis_adapter.redis import r
         # we want to verify that we are using a testing db namespace, to avoid polluting the development env
         # we determine that we are connected to the correct namespace by setting a dummy value,
         # then calling "info" on the redis client.
         dummy = str(uuid4())
         r.set(dummy, 1)
-        assert 'db%i' % test_redis_db in r.info(
-            "keyspace"), "The redis client is not using the testing db namespace. Testing could corrupt development data"
+        assert 'db%i' % test_redis_db in r.info("keyspace"), \
+            "The redis client is not using the testing db namespace. Testing could corrupt development data"
 
         # clean-up
         drop_db(r)
@@ -39,9 +31,17 @@ class TestRedisAdapter(TestCase):
         # good to go
 
     def tearDown(self):
-        drop_db(self.r)
+        drop_db(r)
 
-    def teslt_simple(self):
-        pass
-        # use the redis_adapter to load the data
-        # use the raw_client to verify that the corect items were loaded under the correct key
+    def test_correct_top_level_keys(self):
+        # dummy_data was loaded from a file with the same format as original data.
+        places, metadata = parse_raw_input(dummy_data)
+        load_to_datastore(places, metadata)
+
+        area_name = metadata.area_name
+        expected_keys = [
+            "cities:boundaries",
+            "cities:places:%s" % area_name,
+            "cities:coordinates:%s" % area_name
+        ]
+        self.assertEqual(set(expected_keys), set(r.keys("*")))

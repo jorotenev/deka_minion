@@ -81,7 +81,7 @@ class TestParallelise(TestCase):
                          "Looks like the query method was called with the same argument twice")
 
 
-# TODO DRY mocking really nice article https://makina-corpus.com/blog/metier/2013/dry-up-mock-instanciation-with-addcleanup
+# TODO DRY mocking. really nice article https://makina-corpus.com/blog/metier/2013/dry-up-mock-instanciation-with-addcleanup
 class TestBusyCircle(TestCase):
     def setUp(self):
         mocked_should_keep_place = patch('get_places.google_places_wrapper.wrapper.should_keep_place')
