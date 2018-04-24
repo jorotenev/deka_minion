@@ -3,7 +3,7 @@ import os
 from os import path, makedirs
 
 
-def get_durectiry_of_file(file):
+def get_directory_of_file(file):
     return os.path.dirname(os.path.realpath(file))
 
 
