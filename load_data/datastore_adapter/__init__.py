@@ -1,1 +1,1 @@
-from .redis import load_to_datastore
+from .redis import load_to_datastore, QueryFacade
