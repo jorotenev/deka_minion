@@ -52,7 +52,7 @@ def load_to_datastore(places: Dict, metadata: Metadata):
         log.info("Begin promoting the new data.")
         # delete the old data and promote the stand-by data to official
         promote_temp_to_official(metadata.area_name)
-        log.info("%i places were succeffully promoted & available for the [%s] area"
+        log.info("%i places were successfully promoted & available for the [%s] area"
                  % (len(places), metadata.area_name))
         return True
     except:

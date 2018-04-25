@@ -43,14 +43,21 @@ class TestRedisAdapter(TestCase):
     def test_correct_top_level_keys(self):
         # dummy_data was loaded from a file with the same format as original data.
         load_to_datastore(self.places, self.metadata)
+        TestRedisAdapter.assert_correct_top_level_keys_loaded_in_redis(tester=self, metadata=self.metadata)
 
-        area_name = self.metadata.area_name
+    @staticmethod
+    def assert_correct_top_level_keys_loaded_in_redis(tester, metadata):
+        """
+        :param tester: `self` from a method in class extending TestCase
+        :param metadata: see the load_data readme
+        """
+        area_name = metadata.area_name
         expected_keys = [
             "%s%s" % (cities_boundaries_template_key, area_name),
             "%s%s" % (cities_places_template_key, area_name),
             "%s%s" % (cities_coordinates_template_key, area_name)
         ]
-        self.assertEqual(set(expected_keys), set(r.keys("*")))
+        tester.assertEqual(set(expected_keys), set(r.keys("*")))
 
     def test_correct_data_under_boundaries(self):
         """
@@ -62,23 +69,28 @@ class TestRedisAdapter(TestCase):
         }
         """
         load_to_datastore(self.places, self.metadata)
-        metadata = self.metadata
+        TestRedisAdapter.assert_correct_data_under_boundaries(tester=self, metadata=self.metadata)
+
+    @staticmethod
+    def assert_correct_data_under_boundaries(tester, metadata):
         area_name = metadata.area_name
 
         expected_cities_boundaries_keys = [area_name]
         raw_keys = r.keys("*%s*" % cities_boundaries_template_key)
+
         # keys == ["cities:boundaries:london"]
         keys = [KeyConverter.get_area_name(k) for k in raw_keys]
-        self.assertEqual(set(keys), set(expected_cities_boundaries_keys))
+        tester.assertEqual(set(keys), set(expected_cities_boundaries_keys))
 
-        expected_cities_boundaries_value = json.dumps({
-            "northwest": {"lat": metadata.bounding_rectangle["northwest"]["lat"],
-                          "lng": metadata.bounding_rectangle["northwest"]["lng"]},
-            "southeast": {"lat": metadata.bounding_rectangle["southeast"]["lat"],
-                          "lng": metadata.bounding_rectangle["southeast"]["lng"]},
-        }
+        expected_cities_boundaries_value = json.dumps(
+            {
+                "northwest": {"lat": metadata.bounding_rectangle["northwest"]["lat"],
+                              "lng": metadata.bounding_rectangle["northwest"]["lng"]},
+                "southeast": {"lat": metadata.bounding_rectangle["southeast"]["lat"],
+                              "lng": metadata.bounding_rectangle["southeast"]["lng"]},
+            }
         )
-        self.assertEqual(expected_cities_boundaries_value, r.get(cities_boundaries_template_key + area_name))
+        tester.assertEqual(expected_cities_boundaries_value, r.get(cities_boundaries_template_key + area_name))
 
     def test_correct_data_under_places(self):
         """
@@ -87,20 +99,24 @@ class TestRedisAdapter(TestCase):
         The value is an object, as returned by the same API.
         """
         load_to_datastore(self.places, self.metadata)
+        TestRedisAdapter.assert_correct_data_under_places(tester=self, places=self.places, metadata=self.metadata)
 
-        area_name = self.metadata.area_name
+    @staticmethod
+    def assert_correct_data_under_places(tester, places, metadata):
+
+        area_name = metadata.area_name
         places_key_for_area = cities_places_template_key + area_name
 
         all_stored_places_dict = r.hgetall(places_key_for_area)
 
-        expected_keys = set(dummy_data['places'].keys())
+        expected_keys = set(places.keys())
 
-        self.assertEqual(expected_keys, set(all_stored_places_dict.keys()))
+        tester.assertEqual(expected_keys, set(all_stored_places_dict.keys()))
 
-        # ensure the objects under the keys are correct
+        # now, ensure the objects under the keys are correct
         for place_key, stored_place in all_stored_places_dict.items():
             stored_place = Facade.get_place_data(area_name=area_name, place_key=place_key)
-            self.assertEqual(self.places[place_key], stored_place)
+            tester.assertEqual(places[place_key], stored_place)
 
     def test_correct_data_under_coordinates(self):
         """
@@ -111,18 +127,63 @@ class TestRedisAdapter(TestCase):
         `cities_places_template_key<area_name>`
         """
         load_to_datastore(self.places, self.metadata)
-        area_name = self.metadata.area_name
+        TestRedisAdapter.assert_correct_data_under_coordinates(tester=self, metadata=self.metadata, places=self.places)
+
+    @staticmethod
+    def assert_correct_data_under_coordinates(tester, places, metadata):
+        area_name = metadata.area_name
 
         # for each place we've loaded query the datastore using the lat+lng of the given place.
         # the query is within a given small radius (for a lack of a better way to search)
         # we expected that the result will be a single item, representing the given place
-        for place_id, place in self.places.items():
+        for place_id, place in places.items():
             # use the coordinates of a place to query the datastore within a radius
             items = r.georadius(cities_coordinates_template_key + area_name,
                                 latitude=place['geometry']['location']['lat'],
                                 longitude=place['geometry']['location']['lng'],
                                 radius=1,
                                 unit='m')
-            self.assertEqual(1, len(items), "Expect that the datastore returned a single"
-                                            "items when querying for a location")
-            self.assertEqual(place['place_id'], items[0])
+            tester.assertEqual(1, len(items), "Expect that the datastore returned a single"
+                                              "items when querying for a location")
+            tester.assertEqual(place['place_id'], items[0])
+
+
+class TestUpdatingExistingArea(TestCase):
+    """
+    Make sure that updating existing area works (e.g. we've already loaded data for sofia, and we want to update it)
+    The test below is actually just loading some data, running all tests from TestRedisAdapter (sanity checking), then loading
+    another dataset and running the same sets again.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        ensure_correct_redis_used()
+        cls.places, cls.metadata = parse_raw_input(dummy_data)
+
+    def tearDown(self):
+        drop_db(r)
+
+    @staticmethod
+    def run_all_tests(tester, places, metadata):
+        # test all data in redis
+        TestRedisAdapter.assert_correct_data_under_coordinates(tester=tester, places=places, metadata=metadata)
+        TestRedisAdapter.assert_correct_data_under_boundaries(tester=tester, metadata=metadata)
+        TestRedisAdapter.assert_correct_data_under_places(tester=tester, places=places, metadata=metadata)
+
+    def test_update(self):
+        """
+        We'd first load half of the dummy data for the given city.
+        We'd then load the whole data set.
+        We expect that the old data is fully replaced with the new one
+        """
+        metadata = self.metadata  # the metadata'd stay the same
+        places_initial_batch = dict(list(self.places.items())[:len(self.places) // 2])  # get the first half of a dict
+        load_to_datastore(places=places_initial_batch, metadata=metadata)
+
+        # sanity checking
+        TestUpdatingExistingArea.run_all_tests(tester=self, places=places_initial_batch, metadata=metadata)
+
+        # now load a second batch (which is just all of the available data)
+        load_to_datastore(places=self.places, metadata=metadata)
+        # and test again
+        TestUpdatingExistingArea.run_all_tests(tester=self, places=self.places, metadata=metadata)
