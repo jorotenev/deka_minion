@@ -12,7 +12,7 @@ def main():
     log.info("Loaded input file with %i places." % len(places))
     log.info("area-name = %s" % metadata.area_name)
 
-    load_to_datastore(places)
+    load_to_datastore(places, metadata=metadata)
 
 
 def read_input(file_path):
