@@ -1,26 +1,29 @@
 import logging as log
+import sys
 from datetime import datetime as dt
 
 from deka_types import Circle
 from get_places.config import Config
 from get_places.google_places_wrapper.wrapper import query_google_places
-from shared_utils.file_utils import readJSONFileAndConvertToDict, save_dict_to_file, get_directory_of_file
+from shared_utils.file_utils import readJSONFileAndConvertToDict, save_dict_to_file
 
 
 def main():
     log.info("Starting at %s" % dt.now().isoformat())
 
     # read all coordinates of circles (areas) for which we want to query the Google Places API + some metadata
-    input_file = "%s/input/sofia_coords_5990_r150.json" % get_directory_of_file(__file__)
-    input_circles_coords, metadata = read_input(input_file)
+    input_file_fullpath = sys.argv[1]
+    input_circles_coords, metadata = read_input(input_file_fullpath)
 
     # query the Google Places API to get all places within the input geographical circles
     all_places = query_google_places(circles_coords=input_circles_coords)
     log.info("All batches are processed. %i places obtained" % len(all_places))
 
-    file_path = "{folder}/{num_places}_{date}.json".format(
+    file_path = "{folder}/{area}_count{num_places}_r{radius}_{date}.json".format(
         folder=Config.output_folder,
+        area=metadata['area_name'],
         num_places=len(all_places),
+        radius=metadata['circle_radius'],
         date=dt.now().isoformat()
     )
     log.info("Saving %i places to %s" % (len(all_places), file_path))
@@ -55,6 +58,7 @@ def prepare_raw_input(raw_input):
     """
     circle_radius = raw_input['circle_radius']
     metadata = {
+        "circle_radius": circle_radius,
         "area_name": raw_input['area_name'],
         "bounding_rectangle": raw_input['bounding_rectangle']
     }
