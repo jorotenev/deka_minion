@@ -72,11 +72,11 @@ def load_to_temporary(places, metadata):
     temp_area_name = KeyConverter.to_temp(area_name)
     transaction = r.pipeline()
 
-    Facade.add_boundaries(area_name=temp_area_name,
-                          boundaries_rectangle=boundaries_rectangle,
-                          pipe=transaction)
-    Facade.add_places(area_name=temp_area_name, places=places, pipe=transaction)
-    Facade.add_coordinates(area_name=temp_area_name, places=places, pipe=transaction)
+    RedisFacade.add_boundaries(area_name=temp_area_name,
+                               boundaries_rectangle=boundaries_rectangle,
+                               pipe=transaction)
+    RedisFacade.add_places(area_name=temp_area_name, places=places, pipe=transaction)
+    RedisFacade.add_coordinates(area_name=temp_area_name, places=places, pipe=transaction)
     try:
         transaction.execute(raise_on_error=True)
         log.info("Added new data in a temporary stage [%s]" % area_name)
@@ -121,7 +121,7 @@ def extract_latlng_of_place(place) -> LatLng:
     return LatLng(lat=loc['lat'], lng=loc['lng'])
 
 
-class Facade:
+class RedisFacade:
     def __init__(self):
         pass
 
@@ -165,11 +165,6 @@ class Facade:
 
             pipe.geoadd(cities_coordinates_template_key + area_name, lat_lng.lng, lat_lng.lat, place_id)
         return pipe
-
-    @classmethod
-    def get_boundaries_for_area(cls, area_name):
-        raw = r.get(cities_boundaries_template_key + area_name)
-        return deserialize(raw)
 
     @classmethod
     def get_place_data(cls, area_name, place_key):

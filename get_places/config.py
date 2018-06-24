@@ -2,7 +2,7 @@ import os
 
 
 class Config:
-    google_access_key = os.environ['GOOGLE_ACCESS_KEY']
+    google_access_key = os.environ['DEKA_GOOGLE_ACCESS_KEY']
     google_places_api_url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
     output_folder = "output"
 

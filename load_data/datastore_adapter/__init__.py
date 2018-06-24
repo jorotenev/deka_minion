@@ -1,1 +1,1 @@
-from .redis import load_to_datastore, Facade
+from .redis import load_to_datastore, RedisFacade

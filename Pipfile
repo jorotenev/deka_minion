@@ -9,6 +9,7 @@ url = "https://pypi.python.org/simple"
 
 requests = "*"
 redis = "*"
+"boto3" = "*"
 
 
 [dev-packages]

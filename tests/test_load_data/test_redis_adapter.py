@@ -2,7 +2,7 @@ import json
 from unittest import TestCase
 from uuid import uuid4
 
-from load_data.datastore_adapter import load_to_datastore, Facade
+from load_data.datastore_adapter import load_to_datastore, RedisFacade
 from load_data.datastore_adapter.redis import r, cities_boundaries_template_key, cities_places_template_key, \
     cities_coordinates_template_key
 from load_data.main import parse_raw_input
@@ -183,7 +183,7 @@ class CommonAssertions:
 
         # now, ensure the objects under the keys are correct
         for place_key, stored_place in all_stored_places_dict.items():
-            stored_place = Facade.get_place_data(area_name=area_name, place_key=place_key)
+            stored_place = RedisFacade.get_place_data(area_name=area_name, place_key=place_key)
             tester.assertEqual(places[place_key], stored_place)
 
     @staticmethod
