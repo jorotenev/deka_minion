@@ -4,3 +4,4 @@ coords.json
 *.log
 output/
 *.pyc
+.vscode
