@@ -12,6 +12,7 @@ from load_data.config import Config
 from load_data.deka_types import Metadata, LatLng
 
 r = StrictRedis(host=Config.REDIS_HOST, port=Config.REDIST_PORT, db=Config.REDIS_DB, decode_responses=True)
+
 cities_boundaries_template_key = "cities:boundaries:"
 # e.g. cities:places:london
 cities_places_template_key = "cities:places:"
@@ -20,7 +21,7 @@ cities_coordinates_template_key = "cities:coordinates:"
 
 
 class KeyConverter:
-    temp_stage_suffix = ":temporarykey"
+    temp_stage_suffix = ":tmpkey"
 
     @classmethod
     def to_temp(cls, k):
@@ -44,19 +45,16 @@ def load_to_datastore(places: Dict, metadata: Metadata):
     :param metadata:
     :return boolean - True if successfully added
     """
-    try:
-        log.info("Begin the process of loading the new data.")
-        # add all data to temporary keys
-        load_to_temporary(places, metadata)
 
-        log.info("Begin promoting the new data.")
-        # delete the old data and promote the stand-by data to official
-        promote_temp_to_official(metadata.area_name)
-        log.info("%i places were successfully promoted & available for the [%s] area"
-                 % (len(places), metadata.area_name))
-        return True
-    except:
-        return False
+    log.info("Begin the process of loading the new data.")
+    # add all data to temporary keys
+    load_to_temporary(places, metadata)
+
+    log.info("Begin promoting the new data.")
+    # delete the old data and promote the stand-by data to official
+    promote_temp_to_official(metadata.area_name)
+    log.info("%i places were successfully promoted & available for the [%s] area"
+             % (len(places), metadata.area_name))
 
 
 def load_to_temporary(places, metadata):
@@ -80,10 +78,9 @@ def load_to_temporary(places, metadata):
     try:
         transaction.execute(raise_on_error=True)
         log.info("Added new data in a temporary stage [%s]" % area_name)
-
-        return True
-    except:
-        return False
+    except Exception as ex:
+        log.exception('failed to persist to temporary')
+        raise
 
 
 def promote_temp_to_official(area_name):
@@ -104,8 +101,9 @@ def promote_temp_to_official(area_name):
 
     try:
         transaction.execute(raise_on_error=True)
-    except:
-        return False
+    except Exception as ex:
+        log.exception("Failed to promote temp to hot")
+        raise
 
 
 def deserialize(serialized):

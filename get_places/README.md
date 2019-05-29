@@ -18,20 +18,20 @@ need to be queried more thoroughly due to the limit of 60).
 The package outputs a single file which contains all of the places from the input areas.
 
 **Format of the input:**
-```
-{
+```javascript
+
 {
     "area_name": "sofia",
     "circle_radius": 150,
     "bounding_rectangle": {
-    "northwest": {
-      "lat": 42.748272769256154,
-      "lng": 23.216514587402344
-    },
-    "southeast": {
-      "lat": 42.59934549203741,
-      "lng": 23.40774536132813
-    }
+      "northwest": {
+        "lat": 42.748272769256154,
+        "lng": 23.216514587402344
+      },
+      "southeast": {
+        "lat": 42.59934549203741,
+        "lng": 23.40774536132813
+      }
     },
     "coordinates" : [{"lat":11, "lng":22}, ....],
 }

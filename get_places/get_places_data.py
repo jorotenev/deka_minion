@@ -1,3 +1,4 @@
+
 import argparse
 import json
 import logging as log
@@ -9,7 +10,6 @@ from deka_types import Circle
 from get_places.config import Config
 from get_places.google_places_wrapper.wrapper import query_google_places
 from shared_utils.file_utils import readJSONFileAndConvertToDict, save_dict_to_file
-
 
 class InputFileType:
     local_file = "file"
@@ -53,6 +53,7 @@ def read_input():
         raw_input = read_from_s3(input_path)
     else:
         raise Exception("Invalid input file location")
+    
     return prepare_raw_input(raw_input=raw_input)
 
 
