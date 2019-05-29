@@ -5,3 +5,4 @@ coords.json
 output/
 *.pyc
 .vscode
+.env
